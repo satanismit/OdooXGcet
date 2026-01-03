@@ -11,6 +11,7 @@ from models import (
     CreateEmployeeResponse,
     LoginRequest,
     LoginResponse,
+    UserResponse,
 )
 from utils import (
     get_password_hash,
@@ -24,7 +25,7 @@ from config import settings
 
 
 # Security
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 # Routers
 auth_router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -32,8 +33,15 @@ admin_router = APIRouter(prefix="/admin", tags=["Admin"])
 
 
 # Dependency to get current user
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> User:
+async def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)) -> User:
     """Get the current authenticated user from JWT token."""
+    if credentials is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated. Authorization header required.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
     token = credentials.credentials
     login_id = decode_access_token(token)
     
@@ -159,12 +167,35 @@ async def login(request: LoginRequest):
         expires_delta=access_token_expires,
     )
     
+    # Return response in format frontend expects
     return LoginResponse(
         access_token=access_token,
         token_type="bearer",
-        login_id=user.login_id,
-        email=user.email,
-        role=user.role.value,
+        user={
+            "login_id": user.login_id,
+            "email": user.email,
+            "name": f"{user.first_name} {user.last_name}",
+            "role": user.role.value,
+            "joining_date": user.joining_date.isoformat() if user.joining_date else None,
+        }
+    )
+
+
+@auth_router.get("/users/me", response_model=UserResponse)
+async def read_users_me(current_user: User = Depends(get_current_user)):
+    """
+    Get the current authenticated user's information.
+    
+    Requires a valid JWT token in the Authorization header.
+    """
+    return UserResponse(
+        login_id=current_user.login_id,
+        email=current_user.email,
+        first_name=current_user.first_name,
+        last_name=current_user.last_name,
+        company_name=current_user.company_name,
+        role=current_user.role.value,
+        joining_date=current_user.joining_date,
     )
 
 

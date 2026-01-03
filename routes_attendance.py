@@ -298,3 +298,188 @@ async def get_my_leaves(current_user: User = Depends(get_current_user)):
             for leave in leaves
         ]
     }
+
+
+@attendance_router.get("/today")
+async def get_today_attendance(current_user: User = Depends(get_current_user)):
+    """
+    Get today's attendance record for current user.
+    Frontend expects this endpoint.
+    """
+    today = datetime.combine(date.today(), datetime.min.time())
+    
+    attendance = await Attendance.find_one(
+        Attendance.user_id == current_user.login_id,
+        Attendance.date >= today,
+        Attendance.date < today + timedelta(days=1)
+    )
+    
+    if not attendance:
+        return None
+    
+    # Calculate work hours if checked out
+    work_hours = None
+    if attendance.check_in_time and attendance.check_out_time:
+        time_diff = attendance.check_out_time - attendance.check_in_time
+        work_hours = round(time_diff.total_seconds() / 3600, 2)
+    
+    return {
+        "id": str(attendance.id),
+        "userId": attendance.user_id,
+        "date": attendance.date.isoformat(),
+        "checkIn": attendance.check_in_time.isoformat() if attendance.check_in_time else None,
+        "checkOut": attendance.check_out_time.isoformat() if attendance.check_out_time else None,
+        "status": attendance.status.value,
+        "workHours": work_hours
+    }
+
+
+@attendance_router.get("/records/{user_id}")
+async def get_attendance_records(
+    user_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get attendance records for a user.
+    Frontend expects this endpoint.
+    """
+    # Only allow users to see their own records (or admin can see all)
+    if current_user.login_id != user_id and current_user.role.value != "ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to view this user's records"
+        )
+    
+    # Get last 30 days of records
+    thirty_days_ago = datetime.combine(date.today() - timedelta(days=30), datetime.min.time())
+    
+    records = await Attendance.find(
+        Attendance.user_id == user_id,
+        Attendance.date >= thirty_days_ago
+    ).sort(-Attendance.date).to_list()
+    
+    result = []
+    for record in records:
+        work_hours = None
+        if record.check_in_time and record.check_out_time:
+            time_diff = record.check_out_time - record.check_in_time
+            work_hours = round(time_diff.total_seconds() / 3600, 2)
+        
+        result.append({
+            "id": str(record.id),
+            "userId": record.user_id,
+            "date": record.date.strftime("%Y-%m-%d"),
+            "checkIn": record.check_in_time.strftime("%Y-%m-%dT%H:%M:%S") if record.check_in_time else None,
+            "checkOut": record.check_out_time.strftime("%Y-%m-%dT%H:%M:%S") if record.check_out_time else None,
+            "status": record.status.value,
+            "workHours": work_hours
+        })
+    
+    return result
+
+
+@attendance_router.get("/weekly/{user_id}")
+async def get_weekly_attendance(
+    user_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get weekly attendance summary.
+    Frontend expects this endpoint.
+    """
+    # Only allow users to see their own records (or admin can see all)
+    if current_user.login_id != user_id and current_user.role.value != "ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to view this user's records"
+        )
+    
+    # Get this week's records (Monday to Sunday)
+    today = date.today()
+    monday = today - timedelta(days=today.weekday())
+    monday_dt = datetime.combine(monday, datetime.min.time())
+    
+    records = await Attendance.find(
+        Attendance.user_id == user_id,
+        Attendance.date >= monday_dt
+    ).to_list()
+    
+    # Build weekly summary
+    weekly_data = []
+    for i in range(7):
+        day_date = monday + timedelta(days=i)
+        day_dt = datetime.combine(day_date, datetime.min.time())
+        
+        # Find record for this day
+        day_record = next((r for r in records if r.date.date() == day_date), None)
+        
+        work_hours = 0
+        status = "ABSENT"
+        if day_record:
+            status = day_record.status.value
+            if day_record.check_in_time and day_record.check_out_time:
+                time_diff = day_record.check_out_time - day_record.check_in_time
+                work_hours = round(time_diff.total_seconds() / 3600, 2)
+        
+        weekly_data.append({
+            "day": day_date.strftime("%A"),
+            "date": day_date.strftime("%Y-%m-%d"),
+            "status": status,
+            "hours": work_hours
+        })
+    
+    return {
+        "userId": user_id,
+        "weekStart": monday.strftime("%Y-%m-%d"),
+        "weekEnd": (monday + timedelta(days=6)).strftime("%Y-%m-%d"),
+        "days": weekly_data
+    }
+
+
+@attendance_router.get("/stats/{user_id}")
+async def get_attendance_stats(
+    user_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get attendance statistics for a user.
+    Frontend expects this endpoint.
+    """
+    # Only allow users to see their own stats (or admin can see all)
+    if current_user.login_id != user_id and current_user.role.value != "ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to view this user's stats"
+        )
+    
+    # Get this month's records
+    today = date.today()
+    first_day = datetime.combine(date(today.year, today.month, 1), datetime.min.time())
+    
+    records = await Attendance.find(
+        Attendance.user_id == user_id,
+        Attendance.date >= first_day
+    ).to_list()
+    
+    # Calculate stats
+    total_days = len(records)
+    present_days = sum(1 for r in records if r.status == AttendanceStatus.PRESENT)
+    absent_days = sum(1 for r in records if r.status == AttendanceStatus.ABSENT)
+    
+    total_hours = 0
+    for record in records:
+        if record.check_in_time and record.check_out_time:
+            time_diff = record.check_out_time - record.check_in_time
+            total_hours += time_diff.total_seconds() / 3600
+    
+    avg_hours = round(total_hours / present_days, 2) if present_days > 0 else 0
+    
+    return {
+        "userId": user_id,
+        "month": today.strftime("%B %Y"),
+        "totalDays": total_days,
+        "presentDays": present_days,
+        "absentDays": absent_days,
+        "totalHours": round(total_hours, 2),
+        "averageHours": avg_hours
+    }

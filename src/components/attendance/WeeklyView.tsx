@@ -30,13 +30,13 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({ weeklyData }) => {
         <div className="bg-blue-50 p-4 rounded-lg">
           <p className="text-sm text-gray-600">Total Work Hours</p>
           <p className="text-2xl font-bold text-blue-700">
-            {weeklyData.totalWorkHours.toFixed(1)} hrs
+            {(weeklyData?.totalWorkHours || 0).toFixed(1)} hrs
           </p>
         </div>
         <div className="bg-green-50 p-4 rounded-lg">
           <p className="text-sm text-gray-600">Present Days</p>
           <p className="text-2xl font-bold text-green-700">
-            {weeklyData.presentDays} days
+            {weeklyData?.presentDays || 0} days
           </p>
         </div>
       </div>

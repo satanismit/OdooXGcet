@@ -59,8 +59,8 @@ class BankDetails(BaseModel):
     """Bank account information nested model"""
     bank_name: Optional[str] = None
     account_number: Optional[str] = Field(None, min_length=8)
-    ifsc_code: Optional[str] = Field(None, pattern=r"^[A-Z]{4}0[A-Z0-9]{6}$")
-    pan_number: Optional[str] = Field(None, pattern=r"^[A-Z]{5}[0-9]{4}[A-Z]{1}$")
+    ifsc_code: Optional[str] = None  # Remove strict pattern validation
+    pan_number: Optional[str] = None  # Remove strict pattern validation
     uan_number: Optional[str] = None
 
 
@@ -197,18 +197,20 @@ class CreateEmployeeResponse(BaseModel):
 class LoginResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
-    login_id: str
-    email: str
-    role: str
-
+    user: dict  # Frontend expects a user object
+    
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
                 "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
                 "token_type": "bearer",
-                "login_id": "ODJODO20220001",
-                "email": "admin@ode.com",
-                "role": "ADMIN",
+                "user": {
+                    "login_id": "ODJODO20220001",
+                    "email": "admin@ode.com",
+                    "name": "Admin User",
+                    "role": "ADMIN",
+                    "joining_date": "2024-01-01"
+                }
             }
         }
     )
@@ -216,6 +218,31 @@ class LoginResponse(BaseModel):
 
 class TokenData(BaseModel):
     login_id: Optional[str] = None
+
+
+class UserResponse(BaseModel):
+    """Response model for current user information"""
+    login_id: str
+    email: str
+    first_name: str
+    last_name: str
+    company_name: str
+    role: str
+    joining_date: datetime
+    
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "login_id": "ODJODO20220001",
+                "email": "admin@ode.com",
+                "first_name": "John",
+                "last_name": "Doe",
+                "company_name": "Ode",
+                "role": "ADMIN",
+                "joining_date": "2022-01-15T00:00:00"
+            }
+        }
+    )
 
 
 # ========================

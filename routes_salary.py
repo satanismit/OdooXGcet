@@ -9,6 +9,7 @@ from models import (
     SalaryConfigRequest,
     SalaryConfigResponse,
     SalaryComponent,
+    SalaryDeductions,
 )
 from routes import get_current_user, get_current_admin
 from salary_utils import calculate_salary_breakdown, get_salary_summary
@@ -67,8 +68,9 @@ async def configure_salary(
     
     if existing_salary:
         # Update existing structure
-        existing_salary.total_wage = request.total_wage
-        existing_salary.components = components
+        existing_salary.monthly_wage = request.total_wage
+        existing_salary.yearly_wage = request.total_wage * 12
+        existing_salary.breakdown = components
         existing_salary.updated_at = datetime.utcnow()
         existing_salary.configured_by = current_admin.login_id
         await existing_salary.save()
@@ -77,8 +79,9 @@ async def configure_salary(
         # Create new structure
         salary_structure = SalaryStructure(
             user_id=user_id,
-            total_wage=request.total_wage,
-            components=components,
+            monthly_wage=request.total_wage,
+            yearly_wage=request.total_wage * 12,
+            breakdown=components,
             configured_by=current_admin.login_id
         )
         await salary_structure.insert()
@@ -86,11 +89,21 @@ async def configure_salary(
     # Get summary for response
     summary = get_salary_summary(components)
     
+    # Create default deductions for the response
+    basic_salary = next((c.calculated_amount for c in components if c.name == "Basic"), 0)
+    default_deductions = SalaryDeductions(
+        provident_fund=basic_salary * 0.12,
+        professional_tax=200.0
+    )
+
     return SalaryConfigResponse(
         message="Salary configured successfully",
         user_id=user_id,
-        total_wage=request.total_wage,
-        components=components,
+        monthly_wage=request.total_wage,
+        yearly_wage=request.total_wage * 12,
+        working_days_per_week=5,  # Default
+        breakdown=components,
+        deductions=default_deductions,
         summary=summary
     )
 
@@ -126,13 +139,26 @@ async def get_salary_structure(
         )
     
     # Get summary
-    summary = get_salary_summary(salary_structure.components)
+    summary = get_salary_summary(salary_structure.breakdown)
     
+    # Create default deductions if none exist
+    deductions = salary_structure.deductions
+    if not deductions:
+        # Default deductions: 12% PF of basic salary + 200 PT
+        basic_salary = next((c.calculated_amount for c in salary_structure.breakdown if c.name == "Basic"), 0)
+        deductions = SalaryDeductions(
+            provident_fund=basic_salary * 0.12,
+            professional_tax=200.0
+        )
+
     return SalaryConfigResponse(
         message="Salary structure retrieved successfully",
         user_id=user_id,
-        total_wage=salary_structure.total_wage,
-        components=salary_structure.components,
+        monthly_wage=salary_structure.monthly_wage,
+        yearly_wage=salary_structure.yearly_wage,
+        working_days_per_week=salary_structure.working_days_per_week,
+        breakdown=salary_structure.breakdown,
+        deductions=deductions,
         summary=summary
     )
 

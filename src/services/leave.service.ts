@@ -4,7 +4,7 @@
  */
 
 import { LeaveRequest, LeaveBalance, LeaveStats, LeaveType, LeaveStatus } from '../types/leave';
-import { mockApiCall } from './api';
+import api from './api';
 import { calculateDaysBetween } from '../utils/helpers';
 import { DEFAULT_LEAVE_BALANCE } from '../utils/constants';
 
@@ -30,15 +30,16 @@ let MOCK_LEAVES: LeaveRequest[] = [
  * Get leave requests for a user
  */
 export const getLeaveRequests = async (userId: string): Promise<LeaveRequest[]> => {
-  const leaves = MOCK_LEAVES.filter(l => l.userId === userId);
-  return mockApiCall(leaves);
+  const response = await api.get(`/leaves/my-leaves`);
+  return response.data;
 };
 
 /**
  * Get all leave requests (Admin only)
  */
 export const getAllLeaveRequests = async (): Promise<LeaveRequest[]> => {
-  return mockApiCall(MOCK_LEAVES);
+  const response = await api.get('/leaves/admin/pending');
+  return response.data;
 };
 
 /**
@@ -52,23 +53,13 @@ export const applyLeave = async (
   endDate: string,
   reason: string
 ): Promise<LeaveRequest> => {
-  const totalDays = calculateDaysBetween(startDate, endDate);
-  
-  const newLeave: LeaveRequest = {
-    id: `${Date.now()}`,
-    userId,
-    userName,
-    leaveType,
-    startDate,
-    endDate,
+  const response = await api.post('/leaves/apply', {
+    start_date: startDate,
+    end_date: endDate,
+    leave_type: leaveType,
     reason,
-    status: 'PENDING',
-    appliedOn: new Date().toISOString().split('T')[0],
-    totalDays,
-  };
-  
-  MOCK_LEAVES.push(newLeave);
-  return mockApiCall(newLeave);
+  });
+  return response.data;
 };
 
 /**
@@ -80,72 +71,39 @@ export const updateLeaveStatus = async (
   approvedBy: string,
   rejectionReason?: string
 ): Promise<LeaveRequest> => {
-  const leaveIndex = MOCK_LEAVES.findIndex(l => l.id === leaveId);
-  
-  if (leaveIndex === -1) {
-    throw new Error('Leave request not found');
-  }
-  
-  const leave = MOCK_LEAVES[leaveIndex];
-  leave.status = status;
-  leave.approvedBy = approvedBy;
-  leave.approvedOn = new Date().toISOString().split('T')[0];
-  
-  if (status === 'REJECTED' && rejectionReason) {
-    leave.rejectionReason = rejectionReason;
-  }
-  
-  return mockApiCall(leave);
+  const response = await api.put(`/leaves/admin/action/${leaveId}`, {
+    action: status.toLowerCase(),
+    admin_comment: rejectionReason
+  });
+  return response.data;
 };
 
 /**
  * Get leave balance for a user
  */
 export const getLeaveBalance = async (userId: string): Promise<LeaveBalance> => {
-  const userLeaves = MOCK_LEAVES.filter(l => l.userId === userId && l.status === 'APPROVED');
-  
-  const usedPaid = userLeaves.filter(l => l.leaveType === 'PAID').reduce((sum, l) => sum + l.totalDays, 0);
-  const usedSick = userLeaves.filter(l => l.leaveType === 'SICK').reduce((sum, l) => sum + l.totalDays, 0);
-  const usedCasual = userLeaves.filter(l => l.leaveType === 'CASUAL').reduce((sum, l) => sum + l.totalDays, 0);
-  
-  const balance: LeaveBalance = {
-    userId,
-    paidLeave: DEFAULT_LEAVE_BALANCE.PAID - usedPaid,
-    sickLeave: DEFAULT_LEAVE_BALANCE.SICK - usedSick,
-    casualLeave: DEFAULT_LEAVE_BALANCE.CASUAL - usedCasual,
-    totalUsed: usedPaid + usedSick + usedCasual,
-  };
-  
-  return mockApiCall(balance);
+  const response = await api.get('/leaves/me/balance');
+  return response.data;
 };
 
 /**
  * Get leave statistics (Admin only)
  */
 export const getLeaveStats = async (): Promise<LeaveStats> => {
-  const stats: LeaveStats = {
-    totalPending: MOCK_LEAVES.filter(l => l.status === 'PENDING').length,
-    totalApproved: MOCK_LEAVES.filter(l => l.status === 'APPROVED').length,
-    totalRejected: MOCK_LEAVES.filter(l => l.status === 'REJECTED').length,
+  // Mock implementation - can be replaced with actual API call when endpoint exists
+  return {
+    totalLeaves: 10,
+    pendingLeaves: 2,
+    approvedLeaves: 6,
+    rejectedLeaves: 2
   };
-  
-  return mockApiCall(stats);
 };
 
 /**
  * Cancel leave request
  */
 export const cancelLeave = async (leaveId: string): Promise<void> => {
-  const leaveIndex = MOCK_LEAVES.findIndex(l => l.id === leaveId);
-  
-  if (leaveIndex === -1) {
-    throw new Error('Leave request not found');
-  }
-  
-  if (MOCK_LEAVES[leaveIndex].status !== 'PENDING') {
-    throw new Error('Can only cancel pending leave requests');
-  }
-  
-  MOCK_LEAVES.splice(leaveIndex, 1);
-  return mockApiCall(undefined);
+  // Mock implementation - delete functionality not available in current API
+  console.warn('Delete leave functionality not implemented in backend');
+  throw new Error('Delete leave functionality not available');
 };

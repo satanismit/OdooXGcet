@@ -1,0 +1,62 @@
+﻿
+================================================================================
+                        ≡ƒº¬ COMPLETE API INTEGRATION TEST                         
+================================================================================
+
+1∩╕ÅΓâú  Admin Signup
+Γ£à POST /auth/signup: 201
+   Admin Email: testadmin1767431486@example.com
+   Login ID: INTEAD20260004
+
+2∩╕ÅΓâú  Admin Login
+Γ£à POST /auth/login: 200
+   Token: eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...
+
+3∩╕ÅΓâú  Get User Profile
+Γ£à GET /auth/users/me: 200
+   Name: Test Admin
+   Role: ADMIN
+
+4∩╕ÅΓâú  Create Employee
+Γ¥î POST /admin/create-employee: 500
+   Error: Internal Server Error
+
+5∩╕ÅΓâú  Employee Login
+ΓÅ¡∩╕Å  SKIPPED
+
+6∩╕ÅΓâú  Employee Check-in
+ΓÅ¡∩╕Å  SKIPPED
+
+7∩╕ÅΓâú  Get Today's Attendance
+ΓÅ¡∩╕Å  SKIPPED
+
+8∩╕ÅΓâú  Get Attendance Records
+ΓÅ¡∩╕Å  SKIPPED
+
+9∩╕ÅΓâú  Get Weekly Attendance
+ΓÅ¡∩╕Å  SKIPPED
+
+≡ƒöƒ Get Attendance Stats
+ΓÅ¡∩╕Å  SKIPPED
+
+1∩╕ÅΓâú1∩╕ÅΓâú  Employee Check-out
+ΓÅ¡∩╕Å  SKIPPED
+
+1∩╕ÅΓâú2∩╕ÅΓâú  Update Personal Info
+ΓÅ¡∩╕Å  SKIPPED
+
+1∩╕ÅΓâú3∩╕ÅΓâú  Update Bank Details
+ΓÅ¡∩╕Å  SKIPPED
+
+1∩╕ÅΓâú4∩╕ÅΓâú  Get Dashboard Employees
+Γ¥î GET /dashboard/employees: 500
+
+================================================================================
+                                 ≡ƒôè TEST SUMMARY                                 
+================================================================================
+Total Tests: 5
+Γ£à Passed: 3 (60%)
+Γ¥î Failed: 2 (40%)
+================================================================================
+
+ΓÜá∩╕Å  2 tests failed. Check the logs above.

@@ -80,8 +80,16 @@ export const formatCurrency = (amount: number): string => {
 /**
  * Get initials from name
  */
-export const getInitials = (firstName: string, lastName: string): string => {
-  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+export const getInitials = (firstName?: string, lastName?: string): string => {
+  const first = firstName?.charAt(0) || '';
+  const last = lastName?.charAt(0) || '';
+  
+  // If both are empty, return a default
+  if (!first && !last) {
+    return 'U'; // For "User"
+  }
+  
+  return `${first}${last}`.toUpperCase();
 };
 
 /**

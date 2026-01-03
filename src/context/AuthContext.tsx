@@ -25,6 +25,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Check if user is already logged in on mount
   useEffect(() => {
+    // Clean up old storage keys (migration)
+    const oldToken = localStorage.getItem('access_token');
+    const oldUser = localStorage.getItem('user');
+    if (oldToken) {
+      console.log('🔧 Migrating old authentication data...');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('refresh_token');
+    }
+    
     const currentUser = authService.getCurrentUser();
     if (currentUser) {
       setUser(currentUser);

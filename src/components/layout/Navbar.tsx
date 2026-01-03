@@ -34,7 +34,7 @@ export const Navbar: React.FC = () => {
   }, [user]);
 
   const checkAttendanceStatus = async () => {
-    if (!user) return;
+    if (!user || !user.id) return;
     try {
       const record = await attendanceService.getTodayAttendance(user.id);
       setIsCheckedIn(!!record && !!record.checkIn && !record.checkOut);
@@ -44,7 +44,7 @@ export const Navbar: React.FC = () => {
   };
 
   const handleAttendanceToggle = async () => {
-    if (!user) return;
+    if (!user || !user.id) return;
     setLoading(true);
     try {
       if (isCheckedIn) {
@@ -110,9 +110,9 @@ export const Navbar: React.FC = () => {
               <div className="flex items-center gap-3 relative" ref={dropdownRef}>
                 <div className="text-right hidden sm:block">
                   <p className="text-sm font-medium text-gray-900">
-                    {user.firstName} {user.lastName}
+                    {user?.firstName || 'User'} {user?.lastName || ''}
                   </p>
-                  <p className="text-xs text-gray-500">{user.role}</p>
+                  <p className="text-xs text-gray-500">{user?.role || 'Employee'}</p>
                 </div>
                 
                 {/* Avatar */}
@@ -120,7 +120,7 @@ export const Navbar: React.FC = () => {
                   onClick={() => setShowDropdown(!showDropdown)}
                   className="h-10 w-10 rounded-full bg-primary-600 flex items-center justify-center text-white font-semibold hover:ring-2 hover:ring-offset-2 hover:ring-primary-500 transition-all focus:outline-none"
                 >
-                  {getInitials(user.firstName, user.lastName)}
+                  {getInitials(user?.firstName, user?.lastName)}
                 </button>
 
                 {/* Dropdown Menu */}

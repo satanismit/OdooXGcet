@@ -41,16 +41,6 @@ export const Login: React.FC = () => {
           <p className="text-gray-600">{APP_TAGLINE}</p>
         </div>
 
-        {/* Demo Credentials */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <p className="text-sm font-semibold text-blue-800 mb-2">Demo Credentials:</p>
-          <div className="text-xs text-blue-700 space-y-1">
-            <p><strong>Admin:</strong> admin@dayflow.com</p>
-            <p><strong>Employee:</strong> employee@dayflow.com</p>
-            <p><strong>Password:</strong> any password</p>
-          </div>
-        </div>
-
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
           {error && (

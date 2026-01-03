@@ -181,6 +181,33 @@ async def get_my_leave_balance(current_user: User = Depends(get_current_user)):
     )
 
 
+@leave_router.get("/my-leaves")
+async def get_my_leaves(current_user: User = Depends(get_current_user)):
+    """
+    Get all leave requests for the current user
+    
+    - **Access**: Employee (own leaves only)
+    - **Returns**: List of leave requests with status
+    """
+    leaves = await Leave.find(Leave.user_id == current_user.login_id).to_list()
+    
+    return {
+        "leaves": [
+            {
+                "id": str(leave.id),
+                "leave_type": leave.leave_type.value,
+                "start_date": leave.start_date.isoformat(),
+                "end_date": leave.end_date.isoformat(),
+                "status": leave.status.value,
+                "reason": leave.reason,
+                "applied_on": leave.applied_on.isoformat(),
+                "days": (leave.end_date - leave.start_date).days + 1,
+            }
+            for leave in leaves
+        ]
+    }
+
+
 @leave_router.post("/apply", response_model=LeaveRequestResponse)
 async def apply_for_leave(
     request: ApplyLeaveRequest,

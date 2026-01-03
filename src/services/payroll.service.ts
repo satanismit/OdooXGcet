@@ -4,7 +4,7 @@
  */
 
 import { PayrollRecord, SalaryInfo, SalaryBreakdown } from '../types/payroll';
-import { mockApiCall } from './api';
+import api from './api';
 
 // Mock payroll data
 const MOCK_PAYROLL: PayrollRecord[] = [
@@ -50,37 +50,24 @@ const MOCK_SALARY_INFO: { [userId: string]: SalaryInfo } = {
  * Get payroll records for a user
  */
 export const getPayrollRecords = async (userId: string): Promise<PayrollRecord[]> => {
-  const records = MOCK_PAYROLL.filter(p => p.userId === userId);
-  return mockApiCall(records);
+  const response = await api.get(`/payroll/user/${userId}`);
+  return response.data;
 };
 
 /**
  * Get all payroll records (Admin only)
  */
 export const getAllPayrollRecords = async (): Promise<PayrollRecord[]> => {
-  return mockApiCall(MOCK_PAYROLL);
+  const response = await api.get('/payroll/all');
+  return response.data;
 };
 
 /**
  * Get salary information for a user
  */
 export const getSalaryInfo = async (userId: string): Promise<SalaryInfo> => {
-  const salaryInfo = MOCK_SALARY_INFO[userId] || {
-    userId,
-    currentSalary: {
-      basicSalary: 40000,
-      houseRent: 12000,
-      transportAllowance: 4000,
-      medicalAllowance: 2000,
-      bonus: 0,
-      deductions: 4000,
-    },
-    annualSalary: 648000,
-    lastIncrement: '2025-01-01',
-    nextReview: '2026-01-01',
-  };
-  
-  return mockApiCall(salaryInfo);
+  const response = await api.get(`/salary/${userId}`);
+  return response.data;
 };
 
 /**
@@ -90,25 +77,8 @@ export const updateSalary = async (
   userId: string,
   salaryBreakdown: SalaryBreakdown
 ): Promise<SalaryInfo> => {
-  const grossSalary = 
-    salaryBreakdown.basicSalary +
-    salaryBreakdown.houseRent +
-    salaryBreakdown.transportAllowance +
-    salaryBreakdown.medicalAllowance +
-    salaryBreakdown.bonus;
-  
-  const netSalary = grossSalary - salaryBreakdown.deductions;
-  
-  const updatedInfo: SalaryInfo = {
-    userId,
-    currentSalary: salaryBreakdown,
-    annualSalary: netSalary * 12,
-    lastIncrement: new Date().toISOString().split('T')[0],
-    nextReview: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-  };
-  
-  MOCK_SALARY_INFO[userId] = updatedInfo;
-  return mockApiCall(updatedInfo);
+  const response = await api.put(`/salary/${userId}`, salaryBreakdown);
+  return response.data;
 };
 
 /**
@@ -120,30 +90,9 @@ export const generatePayroll = async (
   month: string,
   year: number
 ): Promise<PayrollRecord> => {
-  const salaryInfo = await getSalaryInfo(userId);
-  
-  const grossSalary = 
-    salaryInfo.currentSalary.basicSalary +
-    salaryInfo.currentSalary.houseRent +
-    salaryInfo.currentSalary.transportAllowance +
-    salaryInfo.currentSalary.medicalAllowance +
-    salaryInfo.currentSalary.bonus;
-  
-  const netSalary = grossSalary - salaryInfo.currentSalary.deductions;
-  
-  const newPayroll: PayrollRecord = {
-    id: `${Date.now()}`,
-    userId,
-    userName,
-    month,
-    year,
-    salaryBreakdown: salaryInfo.currentSalary,
-    grossSalary,
-    netSalary,
-    paymentDate: new Date().toISOString().split('T')[0],
-    status: 'PROCESSING',
-  };
-  
-  MOCK_PAYROLL.push(newPayroll);
-  return mockApiCall(newPayroll);
+  const response = await api.post('/payroll/generate', {
+    user_id: userId,
+    month: `${month}-${year}`,
+  });
+  return response.data;
 };

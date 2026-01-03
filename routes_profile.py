@@ -191,3 +191,92 @@ async def get_full_profile(
         personal_details=target_user.personal_details,
         bank_details=target_user.bank_details
     )
+
+
+# ==================== FRONTEND-COMPATIBLE ENDPOINTS ====================
+
+class UpdatePersonalInfoRequest(BaseModel):
+    """Frontend format for personal info update"""
+    father_name: Optional[str] = None
+    mother_name: Optional[str] = None
+    date_of_birth: Optional[str] = None
+    gender: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    pan_number: Optional[str] = None
+
+
+class UpdateBankDetailsRequest(BaseModel):
+    """Frontend format for bank details update"""
+    bank_name: Optional[str] = None
+    account_number: Optional[str] = None
+    ifsc_code: Optional[str] = None
+    branch_name: Optional[str] = None
+
+
+# Create a new router with /profile prefix to match frontend expectations
+frontend_profile_router = APIRouter(prefix="/profile", tags=["Profile - Frontend Compatible"])
+
+
+@frontend_profile_router.put("/personal")
+async def update_personal_info_frontend(
+    request: UpdatePersonalInfoRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Update personal information (Frontend compatible endpoint).
+    Frontend calls PUT /profile/personal
+    """
+    # Create personal details if doesn't exist
+    if not current_user.personal_details:
+        current_user.personal_details = PersonalDetails()
+    
+    # Update fields - PersonalDetails uses string for date_of_birth
+    if request.date_of_birth:
+        current_user.personal_details.date_of_birth = request.date_of_birth
+    
+    if request.gender:
+        try:
+            current_user.personal_details.gender = Gender(request.gender)
+        except ValueError:
+            pass  # Ignore invalid gender values
+    
+    if request.address:
+        current_user.personal_details.current_address = request.address
+    
+    await current_user.save()
+    
+    return {
+        "message": "Personal information updated successfully",
+        "login_id": current_user.login_id
+    }
+
+
+@frontend_profile_router.put("/bank")
+async def update_bank_details_frontend(
+    request: UpdateBankDetailsRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Update bank details (Frontend compatible endpoint).
+    Frontend calls PUT /profile/bank
+    """
+    # Update bank details
+    if not current_user.bank_details:
+        current_user.bank_details = BankDetails()
+    
+    if request.bank_name:
+        current_user.bank_details.bank_name = request.bank_name
+    
+    if request.account_number:
+        current_user.bank_details.account_number = request.account_number
+    
+    if request.ifsc_code:
+        current_user.bank_details.ifsc_code = request.ifsc_code
+    
+    await current_user.save()
+    
+    return {
+        "message": "Bank details updated successfully",
+        "login_id": current_user.login_id
+    }

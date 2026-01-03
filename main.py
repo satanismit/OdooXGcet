@@ -1,13 +1,14 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
 from models import User, Attendance, Leave, LeaveBalance, SalaryStructure, Payslip
 from routes import auth_router, admin_router
-from routes_attendance import attendance_router, dashboard_router, leave_router as phase2_leave_router
+from routes_attendance import attendance_router, dashboard_router  # Removed phase2 leave_router
 from routes_salary import salary_router
 from routes_admin_salary import admin_salary_router
-from routes_profile import profile_router
+from routes_profile import profile_router, frontend_profile_router
 from routes_analytics import analytics_router
 from routes_payroll import payroll_router
 from routes_leaves import leave_router  # Phase 6: Complete Leave Management
@@ -48,15 +49,40 @@ app = FastAPI(
 )
 
 
+# ========================================
+# CORS CONFIGURATION - Frontend Integration
+# ========================================
+# Allow React frontend to communicate with FastAPI backend
+origins = [
+    "http://localhost:3000",      # React Dev Server (Create React App)
+    "http://localhost:3001",      # React Dev Server (fallback)
+    "http://localhost:5173",      # Vite Dev Server
+    "http://127.0.0.1:3000",      # Alternative localhost
+    "http://127.0.0.1:3001",      # Alternative localhost (fallback)
+    "http://127.0.0.1:5173",      # Alternative Vite
+    "http://localhost:4173",      # Vite Preview
+    # Add your production domain here when deploying
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,         # Allowed origins
+    allow_credentials=True,        # Allow cookies/auth headers
+    allow_methods=["*"],           # Allow all HTTP methods (GET, POST, PUT, DELETE, etc.)
+    allow_headers=["*"],           # Allow all headers (Authorization, Content-Type, etc.)
+)
+
+
 # Include routers
 app.include_router(auth_router)
 app.include_router(admin_router)
 app.include_router(attendance_router)
 app.include_router(dashboard_router)
-app.include_router(phase2_leave_router)  # Phase 2 leave routes
+# Removed phase2_leave_router to avoid conflicts with comprehensive leave_router
 app.include_router(salary_router)
 app.include_router(admin_salary_router)
 app.include_router(profile_router)
+app.include_router(frontend_profile_router)  # Frontend-compatible profile routes
 app.include_router(analytics_router)
 app.include_router(payroll_router)
 app.include_router(leave_router)  # Phase 6: Complete Leave Management

@@ -245,12 +245,12 @@ export const ViewProfile: React.FC = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-6">
                 <div className="w-28 h-28 rounded-full bg-white text-primary-600 flex items-center justify-center text-4xl font-bold shadow-lg">
-                  {getInitials(user.firstName, user.lastName)}
+                  {getInitials(user?.firstName, user?.lastName)}
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold">{user.firstName} {user.lastName}</h1>
-                  <p className="text-primary-100 mt-1 text-lg">{user.position}</p>
-                  <p className="text-primary-200 text-sm mt-1">{user.department}</p>
+                  <h1 className="text-3xl font-bold">{user?.firstName || 'User'} {user?.lastName || ''}</h1>
+                  <p className="text-primary-100 mt-1 text-lg">{user?.position || 'Employee'}</p>
+                  <p className="text-primary-200 text-sm mt-1">{user?.department || 'N/A'}</p>
                 </div>
               </div>
               {canEdit && (

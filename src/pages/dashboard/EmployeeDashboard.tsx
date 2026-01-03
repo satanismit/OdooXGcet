@@ -18,15 +18,30 @@ export const EmployeeDashboard: React.FC = () => {
         {/* Welcome Section */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">
-              {getGreeting()}, {user?.firstName}!
+            <h1 className="text-3xl font-bold text-gray-800">
+              {getGreeting()}, {user?.firstName || 'User'}!
             </h1>
-            <p className="text-gray-600">Team Directory</p>
+            <p className="text-gray-600 mt-1">Team Directory</p>
+          </div>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="text-sm text-gray-600">Your Department</div>
+            <div className="text-2xl font-bold text-primary-600 mt-2">{user?.department || 'Engineering'}</div>
+          </div>
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="text-sm text-gray-600">Your Position</div>
+            <div className="text-2xl font-bold text-primary-600 mt-2">{user?.position || 'Employee'}</div>
           </div>
         </div>
 
         {/* Employee Grid */}
-        <EmployeeGrid isAdmin={false} />
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Team Members</h2>
+          <EmployeeGrid isAdmin={false} />
+        </div>
       </div>
     </Layout>
   );

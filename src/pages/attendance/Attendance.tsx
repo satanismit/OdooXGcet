@@ -23,7 +23,7 @@ export const Attendance: React.FC = () => {
   }, []);
 
   const loadAttendanceData = async () => {
-    if (!user) return;
+    if (!user || !user.id) return;
     try {
       const [attendanceRecords, weekly] = await Promise.all([
         attendanceService.getAttendanceRecords(user.id),

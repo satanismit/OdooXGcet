@@ -1,128 +1,131 @@
 /**
  * Authentication Service
- * Mock authentication service with dummy data
+ * Real backend integration with FastAPI
  */
 
 import { AuthUser, LoginCredentials, RegisterData, User } from '../types/user';
-import { mockApiCall, mockApiError } from './api';
+import api, { setAuthToken, removeAuthToken, handleApiError } from './api';
 import { STORAGE_KEYS } from '../utils/constants';
 
-// Mock user database
-const MOCK_USERS: User[] = [
-  {
-    id: '1',
-    email: 'admin@dayflow.com',
-    firstName: 'Admin',
-    lastName: 'User',
-    role: 'ADMIN',
-    department: 'Management',
-    position: 'HR Manager',
-    joinDate: '2023-01-01',
-    phone: '+91 98765 43210',
-    address: '123 Business Park, Mumbai, India',
-    dob: '1985-05-15',
-    nationality: 'Indian',
-    personalEmail: 'admin.personal@gmail.com',
-    gender: 'Male',
-    maritalStatus: 'Married',
-    bankName: 'HDFC Bank',
-    accountNumber: '123456789012',
-    ifscCode: 'HDFC0001234',
-    panNo: 'ABCDE1234F',
-  },
-  {
-    id: '2',
-    email: 'employee@dayflow.com',
-    firstName: 'John',
-    lastName: 'Doe',
-    role: 'EMPLOYEE',
-    department: 'Engineering',
-    position: 'Software Developer',
-    joinDate: '2023-06-15',
-    phone: '+91 98765 43211',
-    address: '456 Tech Avenue, Bangalore, India',
-    dob: '1995-08-20',
-    nationality: 'Indian',
-    personalEmail: 'john.doe@gmail.com',
-    gender: 'Male',
-    maritalStatus: 'Single',
-    bankName: 'ICICI Bank',
-    accountNumber: '987654321098',
-    ifscCode: 'ICIC0005678',
-    panNo: 'FGHIJ5678K',
-  },
-];
+// ========================================
+// AUTHENTICATION FUNCTIONS
+// ========================================
 
 /**
- * Login user
+ * Login user with backend API
  */
 export const login = async (credentials: LoginCredentials): Promise<AuthUser> => {
-  const user = MOCK_USERS.find(u => u.email === credentials.email);
-  
-  if (!user) {
-    return mockApiError('Invalid email or password');
+  try {
+    console.log('🔐 Logging in:', credentials.email);
+    console.log('📤 Sending login request to:', '/auth/login');
+    console.log('📦 Request data:', { login_id_or_email: credentials.email, password: '[HIDDEN]' });
+    
+    const response = await api.post('/auth/login', {
+      login_id_or_email: credentials.email,
+      password: credentials.password,
+    });
+
+    const { access_token, user } = response.data;
+    
+    // Save token to localStorage
+    setAuthToken(access_token);
+    
+    // Save user data
+    localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(user));
+    
+    console.log('✅ Login successful:', user.name);
+    
+    return {
+      user: {
+        id: user.login_id,
+        email: user.login_id,
+        firstName: user.name.split(' ')[0],
+        lastName: user.name.split(' ').slice(1).join(' '),
+        role: user.role,
+        department: 'Engineering', // You can fetch this from profile later
+        position: 'Employee',
+        joinDate: user.joining_date,
+        phone: '',
+        address: '',
+        dob: '',
+        nationality: 'Indian',
+        personalEmail: user.login_id,
+        gender: 'Male',
+        maritalStatus: 'Single',
+        bankName: '',
+        accountNumber: '',
+        ifscCode: '',
+        panNo: '',
+      },
+      token: access_token,
+    };
+  } catch (error) {
+    console.error('❌ Login failed:', error);
+    console.error('❌ Error details:', error instanceof Error ? error.message : 'Unknown error');
+    if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as any;
+      console.error('❌ Response status:', axiosError.response?.status);
+      console.error('❌ Response data:', axiosError.response?.data);
+    }
+    throw new Error(handleApiError(error));
   }
-  
-  // Mock password check (any password works in demo)
-  if (!credentials.password) {
-    return mockApiError('Password is required');
-  }
-  
-  const authUser: AuthUser = {
-    user,
-    token: `mock-token-${user.id}-${Date.now()}`,
-  };
-  
-  // Store in localStorage
-  localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, authUser.token);
-  localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(authUser.user));
-  
-  return mockApiCall(authUser);
 };
 
 /**
- * Register new user
+ * Register new user (Admin creates employee)
  */
 export const register = async (data: RegisterData): Promise<AuthUser> => {
-  // Check if email already exists
-  const existingUser = MOCK_USERS.find(u => u.email === data.email);
-  if (existingUser) {
-    return mockApiError('Email already registered');
+  try {
+    console.log('📝 Registering user:', data.email);
+    
+    const response = await api.post('/admin/create-employee', {
+      first_name: data.firstName,
+      last_name: data.lastName,
+      email: data.email,
+      joining_date: new Date().toISOString(),
+    });
+
+    const { login_id, password } = response.data;
+    
+    console.log('✅ Registration successful. Login ID:', login_id);
+    
+    // Return the credentials for display
+    return {
+      user: {
+        id: login_id,
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        role: 'EMPLOYEE',
+        department: data.department || 'Engineering',
+        position: data.position || 'Employee',
+        joinDate: new Date().toISOString().split('T')[0],
+        phone: data.phone || '',
+        address: '',
+        dob: '',
+        nationality: 'Indian',
+        personalEmail: data.email,
+        gender: 'Male',
+        maritalStatus: 'Single',
+        bankName: '',
+        accountNumber: '',
+        ifscCode: '',
+        panNo: '',
+      },
+      token: password, // Temp password returned
+    };
+  } catch (error) {
+    console.error('❌ Registration failed:', error);
+    throw new Error(handleApiError(error));
   }
-  
-  const newUser: User = {
-    id: `${Date.now()}`,
-    email: data.email,
-    firstName: data.firstName,
-    lastName: data.lastName,
-    role: 'EMPLOYEE', // New users are always employees
-    department: data.department,
-    position: data.position,
-    joinDate: new Date().toISOString().split('T')[0],
-    phone: data.phone,
-    address: '',
-  };
-  
-  MOCK_USERS.push(newUser);
-  
-  const authUser: AuthUser = {
-    user: newUser,
-    token: `mock-token-${newUser.id}-${Date.now()}`,
-  };
-  
-  // Store in localStorage
-  localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, authUser.token);
-  localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(authUser.user));
-  
-  return mockApiCall(authUser);
 };
 
 /**
  * Logout user
  */
 export const logout = (): void => {
-  localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-  localStorage.removeItem(STORAGE_KEYS.USER_DATA);
+  console.log('👋 Logging out...');
+  removeAuthToken();
 };
 
 /**
@@ -140,52 +143,117 @@ export const getCurrentUser = (): User | null => {
  * Check if user is authenticated
  */
 export const isAuthenticated = (): boolean => {
-  const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-  return !!token;
+  return !!localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
 };
 
 /**
- * Get all users (for directory view)
+ * Get user profile from backend
  */
-export const getAllUsers = async (): Promise<User[]> => {
-  return mockApiCall(MOCK_USERS);
-};
-
-/**
- * Get user by ID
- */
-export const getUserById = async (id: string): Promise<User | null> => {
-  const user = MOCK_USERS.find(u => u.id === id);
-  return mockApiCall(user || null);
+export const getUserProfile = async (): Promise<User> => {
+  try {
+    const response = await api.get('/auth/users/me');
+    const profile = response.data;
+    
+    return {
+      id: profile.login_id || profile.user_id,
+      email: profile.login_id,
+      firstName: profile.name?.split(' ')[0] || '',
+      lastName: profile.name?.split(' ').slice(1).join(' ') || '',
+      role: profile.role,
+      department: 'Engineering',
+      position: 'Employee',
+      joinDate: profile.joining_date,
+      phone: profile.phone || '',
+      address: profile.address || '',
+      dob: profile.date_of_birth || '',
+      nationality: 'Indian',
+      personalEmail: profile.login_id,
+      gender: profile.gender || 'Male',
+      maritalStatus: 'Single',
+      bankName: profile.bank_name || '',
+      accountNumber: profile.account_number || '',
+      ifscCode: profile.ifsc_code || '',
+      panNo: profile.pan_number || '',
+    };
+  } catch (error) {
+    console.error('❌ Failed to fetch profile:', error);
+    throw new Error(handleApiError(error));
+  }
 };
 
 /**
  * Update user profile
  */
 export const updateUser = async (data: Partial<User>): Promise<User> => {
-  const currentUser = getCurrentUser();
-  if (!currentUser) return mockApiError('User not found');
-  
-  return updateUserById(currentUser.id, data);
+  try {
+    // Update personal details
+    if (data.firstName || data.lastName || data.phone || data.address || data.dob) {
+      await api.put('/profile/personal', {
+        father_name: '',
+        mother_name: '',
+        date_of_birth: data.dob,
+        gender: data.gender,
+        phone: data.phone,
+        address: data.address,
+        pan_number: data.panNo,
+      });
+    }
+    
+    // Update bank details
+    if (data.bankName || data.accountNumber || data.ifscCode) {
+      await api.put('/profile/bank', {
+        bank_name: data.bankName,
+        account_number: data.accountNumber,
+        ifsc_code: data.ifscCode,
+        branch_name: '',
+      });
+    }
+    
+    // Fetch updated profile
+    return await getUserProfile();
+  } catch (error) {
+    console.error('❌ Failed to update profile:', error);
+    throw new Error(handleApiError(error));
+  }
 };
 
 /**
- * Update user by ID (Admin function)
+ * Get all users (for admin dashboard)
  */
-export const updateUserById = async (id: string, data: Partial<User>): Promise<User> => {
-  const index = MOCK_USERS.findIndex(u => u.id === id);
-  if (index !== -1) {
-    MOCK_USERS[index] = { ...MOCK_USERS[index], ...data };
+export const getAllUsers = async (): Promise<User[]> => {
+  try {
+    const response = await api.get('/dashboard/employees');
+    const employees = response.data;
     
-    // If updating current user, update local storage
-    const currentUser = getCurrentUser();
-    if (currentUser && currentUser.id === id) {
-      localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(MOCK_USERS[index]));
+    // Map response to User type
+    if (Array.isArray(employees)) {
+      return employees.map((emp: any) => ({
+        id: emp.login_id || emp.id,
+        email: emp.email || emp.login_id,
+        firstName: emp.first_name || '',
+        lastName: emp.last_name || '',
+        role: emp.role || 'EMPLOYEE',
+        department: emp.department || 'Engineering',
+        position: emp.position || 'Employee',
+        joinDate: emp.joining_date || new Date().toISOString(),
+        phone: emp.phone || '',
+        address: emp.address || '',
+        dob: emp.date_of_birth || '',
+        nationality: 'Indian',
+        personalEmail: emp.email || emp.login_id,
+        gender: emp.gender || 'Male',
+        maritalStatus: 'Single',
+        bankName: emp.bank_name || '',
+        accountNumber: emp.account_number || '',
+        ifscCode: emp.ifsc_code || '',
+        panNo: emp.pan_number || '',
+      }));
     }
-    
-    return mockApiCall(MOCK_USERS[index]);
+    return [];
+  } catch (error) {
+    console.error('❌ Failed to fetch all users:', error);
+    return [];
   }
-  
-  return mockApiError('User not found');
 };
+
 
