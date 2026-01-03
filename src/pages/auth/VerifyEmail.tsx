@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { APP_NAME, ROUTES } from '../../utils/constants';
+import { ROUTES } from '../../utils/constants';
 import { Button } from '../../components/common/Button';
 
 export const VerifyEmail: React.FC = () => {

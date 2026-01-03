@@ -166,31 +166,26 @@ export const updateUser = async (data: Partial<User>): Promise<User> => {
   const currentUser = getCurrentUser();
   if (!currentUser) return mockApiError('User not found');
   
-  const index = MOCK_USERS.findIndex(u => u.id === currentUser.id);
+  return updateUserById(currentUser.id, data);
+};
+
+/**
+ * Update user by ID (Admin function)
+ */
+export const updateUserById = async (id: string, data: Partial<User>): Promise<User> => {
+  const index = MOCK_USERS.findIndex(u => u.id === id);
   if (index !== -1) {
     MOCK_USERS[index] = { ...MOCK_USERS[index], ...data };
-    localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(MOCK_USERS[index]));
+    
+    // If updating current user, update local storage
+    const currentUser = getCurrentUser();
+    if (currentUser && currentUser.id === id) {
+      localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(MOCK_USERS[index]));
+    }
+    
     return mockApiCall(MOCK_USERS[index]);
   }
   
   return mockApiError('User not found');
 };
 
-/**
- * Update user profile
- */
-export const updateProfile = async (userId: string, data: Partial<User>): Promise<User> => {
-  const userIndex = MOCK_USERS.findIndex(u => u.id === userId);
-  
-  if (userIndex === -1) {
-    return mockApiError('User not found');
-  }
-  
-  const updatedUser = { ...MOCK_USERS[userIndex], ...data };
-  MOCK_USERS[userIndex] = updatedUser;
-  
-  // Update localStorage
-  localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(updatedUser));
-  
-  return mockApiCall(updatedUser);
-};

@@ -49,7 +49,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const updateUser = async (data: Partial<User>) => {
     if (!user) return;
-    const updatedUser = await authService.updateProfile(user.id, data);
+    const updatedUser = await authService.updateUserById(user.id, data);
     setUser(updatedUser);
   };
 

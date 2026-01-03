@@ -111,6 +111,16 @@ export const AppRoutes: React.FC = () => {
         }
       />
       <Route
+        path="/profile/edit/:id"
+        element={
+          <ProtectedRoute>
+            <RoleRoute allowedRoles={['ADMIN']}>
+              <EditProfile />
+            </RoleRoute>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path={ROUTES.PROFILE_EDIT}
         element={
           <ProtectedRoute>

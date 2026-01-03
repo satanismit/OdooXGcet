@@ -43,6 +43,7 @@ export const ViewProfile: React.FC = () => {
   if (!user) return <Layout><div>User not found</div></Layout>;
 
   const isOwnProfile = currentUser?.id === user.id;
+  const canEdit = isOwnProfile || currentUser?.role === 'ADMIN';
 
   const tabs: { id: ProfileTab; label: string; icon: string }[] = [
     { id: 'personal', label: 'Resume', icon: '📄' },
@@ -252,8 +253,8 @@ export const ViewProfile: React.FC = () => {
                   <p className="text-primary-200 text-sm mt-1">{user.department}</p>
                 </div>
               </div>
-              {isOwnProfile && (
-                <Link to={ROUTES.PROFILE_EDIT}>
+              {canEdit && (
+                <Link to={isOwnProfile ? ROUTES.PROFILE_EDIT : `/profile/edit/${user.id}`}>
                   <Button variant="secondary">Edit Profile</Button>
                 </Link>
               )}

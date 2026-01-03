@@ -50,13 +50,32 @@ export const EmployeeGrid: React.FC<EmployeeGridProps> = ({ isAdmin = false }) =
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      {users.map((user) => (
-        <div
-          key={user.id}
-          onClick={() => handleCardClick(user.id)}
-          className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow relative group"
-        >
+    <div className="space-y-6">
+      {/* Search and Actions Bar */}
+      <div className="flex flex-col sm:flex-row justify-between gap-4 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <div className="relative flex-1 max-w-md">
+          <input
+            type="text"
+            placeholder="Search employees..."
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          />
+          <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
+        </div>
+        
+        {isAdmin && (
+          <button className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium flex items-center gap-2">
+            <span>+</span> NEW
+          </button>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {users.map((user) => (
+          <div
+            key={user.id}
+            onClick={() => handleCardClick(user.id)}
+            className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow relative group"
+          >
           {/* Status Indicator */}
           <div className="absolute top-3 right-3 z-10">
             <div
@@ -93,6 +112,7 @@ export const EmployeeGrid: React.FC<EmployeeGridProps> = ({ isAdmin = false }) =
           </div>
         </div>
       ))}
+      </div>
     </div>
   );
 };
