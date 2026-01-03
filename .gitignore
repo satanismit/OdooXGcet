@@ -43,7 +43,8 @@ venv.bak/
 .env.local
 .env.*.local
 *.env
-config.py
+.env.example
+# Note: config.py is part of the application - NOT ignored
 
 # Database Files
 *.db
@@ -100,6 +101,93 @@ _build/
 *~
 temp/
 tmp/
+*.orig
+
+# Compiled Python Files
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# Package Manager Files
+pip-log.txt
+pip-delete-this-directory.txt
+.installed.cfg
+
+# Coverage Reports
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+nosetests.xml
+test-results/
+junit.xml
+
+# Profiling Data
+*.prof
+*.lprof
+.prof/
+
+# Security & Secrets
+*.pem
+*.key
+*.cert
+*.crt
+secrets/
+.secrets/
+
+# Static Files Cache
+staticfiles/
+media/
+uploads/
+
+# Session Files
+.session
+sessions/
+
+# Lock Files (Optional - uncomment if not needed)
+# poetry.lock
+# Pipfile.lock
+
+# MacOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.directory
+.Trash-*
 
 # Phase Summary Documentation (Optional - comment out if you want to keep)
 # PHASE*_SUMMARY.md

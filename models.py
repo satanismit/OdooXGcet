@@ -475,3 +475,46 @@ class LeaveApplyResponse(BaseModel):
         }
     )
 
+
+# ==================== PHASE 5: PAYSLIP MODEL ====================
+
+class Payslip(Document):
+    """
+    Payslip Document - Stores monthly payroll information
+    Links attendance data with salary configuration
+    """
+    user_id: str  # Reference to User login_id
+    month_year: str  # Format: "MM-YYYY" (e.g., "10-2025")
+    total_working_days: int  # Total days in the month
+    present_days: int  # Days employee was present
+    leave_days: int  # Approved leave days (paid)
+    absent_days: int  # Days absent without leave
+    payable_days: float  # Present + Paid Leaves + Holidays
+    net_salary: float  # (MonthlyWage / 30) * PayableDays
+    monthly_wage: float  # Base monthly wage from salary structure
+    generated_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "user_id": "DAJODO20260001",
+                "month_year": "01-2026",
+                "total_working_days": 31,
+                "present_days": 22,
+                "leave_days": 2,
+                "absent_days": 7,
+                "payable_days": 24.0,
+                "net_salary": 48000.0,
+                "monthly_wage": 60000.0,
+                "generated_at": "2026-01-31T23:59:59"
+            }
+        }
+    )
+    
+    class Settings:
+        name = "payslips"
+        indexes = [
+            "user_id",
+            "month_year",
+        ]
+
