@@ -2,14 +2,15 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
-from models import User, Attendance, Leave, SalaryStructure, Payslip
+from models import User, Attendance, Leave, LeaveBalance, SalaryStructure, Payslip
 from routes import auth_router, admin_router
-from routes_attendance import attendance_router, dashboard_router, leave_router
+from routes_attendance import attendance_router, dashboard_router, leave_router as phase2_leave_router
 from routes_salary import salary_router
 from routes_admin_salary import admin_salary_router
 from routes_profile import profile_router
 from routes_analytics import analytics_router
 from routes_payroll import payroll_router
+from routes_leaves import leave_router  # Phase 6: Complete Leave Management
 from config import settings
 
 
@@ -26,7 +27,7 @@ async def lifespan(app: FastAPI):
     # Initialize Beanie with all document models
     await init_beanie(
         database=database, 
-        document_models=[User, Attendance, Leave, SalaryStructure, Payslip]
+        document_models=[User, Attendance, Leave, LeaveBalance, SalaryStructure, Payslip]
     )
     
     print(f"✅ Connected to MongoDB: {settings.DATABASE_NAME}")
@@ -41,8 +42,8 @@ async def lifespan(app: FastAPI):
 # Create FastAPI app
 app = FastAPI(
     title="Dayflow HRMS",
-    description="Complete HRMS API with Authentication, Attendance, Leave Management, Payroll, Analytics, and Profile Management",
-    version="5.0.0",
+    description="Complete HRMS API with Authentication, Attendance, Leave Management with Balances, Payroll, Analytics, and Profile Management",
+    version="6.0.0",
     lifespan=lifespan,
 )
 
@@ -52,12 +53,13 @@ app.include_router(auth_router)
 app.include_router(admin_router)
 app.include_router(attendance_router)
 app.include_router(dashboard_router)
-app.include_router(leave_router)
+app.include_router(phase2_leave_router)  # Phase 2 leave routes
 app.include_router(salary_router)
 app.include_router(admin_salary_router)
 app.include_router(profile_router)
 app.include_router(analytics_router)
 app.include_router(payroll_router)
+app.include_router(leave_router)  # Phase 6: Complete Leave Management
 
 
 @app.get("/", tags=["Health"])
@@ -66,8 +68,8 @@ async def root():
     return {
         "message": "Welcome to Dayflow HRMS API",
         "status": "running",
-        "version": "5.0.0",
-        "modules": ["Authentication", "Attendance", "Leave Management", "Payroll", "Admin Salary Configuration", "Profile Management", "Attendance Analytics", "Payslip Generation"]
+        "version": "6.0.0",
+        "modules": ["Authentication", "Attendance", "Leave Management with Balances", "Payroll", "Admin Salary Configuration", "Profile Management", "Attendance Analytics", "Payslip Generation"]
     }
 
 

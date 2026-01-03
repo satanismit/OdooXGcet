@@ -1,12 +1,16 @@
-# Test Files - DO NOT PUSH TO GITHUB
-test_*.py
-*_test.py
-tests/
+# Test Cache & Coverage (Keep test files, ignore cache)
 .pytest_cache/
 .coverage
 htmlcov/
 *.cover
 .hypothesis/
+.tox/
+coverage.xml
+*.cover
+.pytest_cache/
+nosetests.xml
+test-results/
+junit.xml
 
 # Python Cache
 __pycache__/
@@ -43,8 +47,8 @@ venv.bak/
 .env.local
 .env.*.local
 *.env
-.env.example
-# Note: config.py is part of the application - NOT ignored
+# Keep .env.example as template
+!.env.example
 
 # Database Files
 *.db
@@ -189,6 +193,14 @@ $RECYCLE.BIN/
 .directory
 .Trash-*
 
-# Phase Summary Documentation (Optional - comment out if you want to keep)
-# PHASE*_SUMMARY.md
-# README_PHASES.md
+# MongoDB local data (if running locally)
+dump/
+mongo-data/
+
+# Anaconda environments
+.conda/
+conda-meta/
+
+# Python virtual environments (Anaconda/Conda)
+*.conda
+.condaenvs/

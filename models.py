@@ -29,6 +29,12 @@ class LeaveStatus(str, Enum):
     REJECTED = "REJECTED"
 
 
+class LeaveType(str, Enum):
+    PAID_LEAVE = "PAID_LEAVE"
+    SICK_LEAVE = "SICK_LEAVE"
+    UNPAID_LEAVE = "UNPAID_LEAVE"
+
+
 class Gender(str, Enum):
     MALE = "Male"
     FEMALE = "Female"
@@ -238,7 +244,10 @@ class Leave(Document):
     user_id: str  # References User.login_id
     start_date: datetime  # Stored as datetime but represents date
     end_date: datetime  # Stored as datetime but represents date
+    leave_type: LeaveType = LeaveType.PAID_LEAVE  # Phase 6: Type of leave
     reason: str
+    attachment_url: Optional[str] = None  # Phase 6: For sick notes/documents
+    days_count: int = 0  # Phase 6: Auto-calculated duration
     status: LeaveStatus = LeaveStatus.PENDING
     approved_by: Optional[str] = None  # Admin login_id
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -249,6 +258,22 @@ class Leave(Document):
         indexes = [
             "user_id",
             "status",
+        ]
+
+
+class LeaveBalance(Document):
+    """Phase 6: Employee Leave Balance Tracking"""
+    user_id: str  # References User.login_id
+    paid_leave_balance: float = 24.0  # Annual paid leave (default 24 days)
+    sick_leave_balance: float = 7.0   # Annual sick leave (default 7 days)
+    year: int  # Fiscal year (e.g., 2026)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    class Settings:
+        name = "leave_balances"
+        indexes = [
+            [("user_id", 1), ("year", 1)],  # Unique per user per year
         ]
 
 
